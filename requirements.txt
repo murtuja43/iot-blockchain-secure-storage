@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# IoT Blockchain Secure Storage — Python dependencies
+#
+# Install everything with:
+#     pip install -r requirements.txt
+#
+# Versions use ">=" lower bounds so pip can resolve wheels compatible with your
+# Python version. Run `pip freeze > requirements.lock` later if you want to pin
+# exact versions for fully reproducible installs.
+# ---------------------------------------------------------------------------
+
+# --- Web / API layer -------------------------------------------------------
+fastapi>=0.110            # REST framework with automatic OpenAPI/Swagger docs
+uvicorn[standard]>=0.27   # ASGI server that actually runs the FastAPI app
+pydantic>=2.6             # request/response validation (used internally by FastAPI)
+
+# --- Cryptography ----------------------------------------------------------
+cryptography>=42.0        # ECDSA digital signatures (SHA-256 itself uses stdlib hashlib)
+
+# --- IoT simulator (HTTP client) ------------------------------------------
+requests>=2.31            # simple HTTP client used by the simulated devices
+
+# --- Testing (development) -------------------------------------------------
+pytest>=8.0               # unit & integration test runner
+httpx>=0.27               # required by FastAPI's TestClient for API tests
