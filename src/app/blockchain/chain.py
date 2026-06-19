@@ -74,3 +74,24 @@ class Blockchain:
             "difficulty": self.difficulty,
             "blocks": [block.to_dict() for block in self.blocks],
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Blockchain":
+        """Rebuild a chain from ``to_dict()`` output (used by the storage layer).
+
+        Unlike ``__init__``, this does NOT create a fresh genesis block - the
+        blocks are restored exactly as they were saved. ``cls.__new__`` builds
+        the instance without running ``__init__`` so that no throwaway genesis
+        is mined during restoration.
+
+        Raises ``ValueError`` if the required keys are missing, so callers can
+        turn malformed data into a clear error.
+        """
+        if not isinstance(data, dict) or "difficulty" not in data or "blocks" not in data:
+            raise ValueError(
+                "blockchain data must be an object with 'difficulty' and 'blocks'"
+            )
+        chain = cls.__new__(cls)
+        chain.difficulty = data["difficulty"]
+        chain.blocks = [Block.from_dict(b) for b in data["blocks"]]
+        return chain
