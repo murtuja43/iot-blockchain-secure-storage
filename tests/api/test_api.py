@@ -177,3 +177,47 @@ def test_validate_endpoint_detects_tampering(client):
     assert body["valid"] is False
     assert body["block_index"] == 1
     assert body["reason"]
+
+
+# --- device history -------------------------------------------------------
+
+def test_device_history_returns_records(client):
+    private_pem = register_device(client, "temp-01")
+    client.post(
+        f"{API_PREFIX}/telemetry",
+        json=signed_telemetry("temp-01", private_pem, value=21.5, timestamp=1000.0),
+    )
+    client.post(
+        f"{API_PREFIX}/telemetry",
+        json=signed_telemetry("temp-01", private_pem, value=22.0, timestamp=1001.0),
+    )
+    resp = client.get(f"{API_PREFIX}/device/temp-01")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["device_id"] == "temp-01"
+    assert body["total_records"] == 2
+    assert all(r["device_id"] == "temp-01" for r in body["records"])
+
+
+def test_device_history_empty_when_no_telemetry(client):
+    register_device(client, "temp-01")
+    resp = client.get(f"{API_PREFIX}/device/temp-01")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total_records"] == 0
+    assert body["records"] == []
+
+
+def test_device_history_unregistered_returns_404(client):
+    resp = client.get(f"{API_PREFIX}/device/ghost")
+    assert resp.status_code == 404
+
+
+def test_device_history_filters_by_device(client):
+    private_a = register_device(client, "dev-A")
+    private_b = register_device(client, "dev-B")
+    client.post(f"{API_PREFIX}/telemetry", json=signed_telemetry("dev-A", private_a))
+    client.post(f"{API_PREFIX}/telemetry", json=signed_telemetry("dev-B", private_b))
+    body = client.get(f"{API_PREFIX}/device/dev-A").json()
+    assert body["total_records"] == 1
+    assert body["records"][0]["device_id"] == "dev-A"

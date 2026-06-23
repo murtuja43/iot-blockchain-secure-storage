@@ -85,3 +85,9 @@ class ValidationResponse(BaseModel):
     valid: bool
     reason: str | None = None
     block_index: int | None = None
+
+
+class DeviceHistoryResponse(BaseModel):
+    device_id: str
+    total_records: int
+    records: list[dict[str, Any]]

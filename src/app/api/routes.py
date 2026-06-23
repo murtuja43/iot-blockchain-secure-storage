@@ -104,6 +104,34 @@ def get_full_chain(
     )
 
 
+@router.get("/device/{device_id}", response_model=schemas.DeviceHistoryResponse)
+def get_device_history(
+    device_id: str,
+    chain: Blockchain = Depends(get_chain),
+    registry: DeviceRegistry = Depends(get_registry),
+) -> schemas.DeviceHistoryResponse:
+    """Return every telemetry transaction recorded for a single device.
+
+    Walks every block in the chain and collects the transactions whose
+    ``device_id`` matches. Returns 404 if the device was never registered.
+    """
+    if not registry.is_registered(device_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"device '{device_id}' is not registered",
+        )
+
+    records = [
+        tx
+        for block in chain.blocks
+        for tx in block.transactions
+        if isinstance(tx, dict) and tx.get("device_id") == device_id
+    ]
+    return schemas.DeviceHistoryResponse(
+        device_id=device_id, total_records=len(records), records=records
+    )
+
+
 @router.get("/validate", response_model=schemas.ValidationResponse)
 def validate(
     chain: Blockchain = Depends(get_chain),
